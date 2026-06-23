@@ -1,0 +1,2568 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nkingsapbe nring — BCA Student · World Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+    <style>
+        :root {
+            --grass: #7CB342;
+            --grass-dark: #5D9B33;
+            --grass-light: #9CCC65;
+            --dirt: #8B5A2B;
+            --dirt-dark: #6F4E37;
+            --stone: #828282;
+            --stone-dark: #6E6E6E;
+            --wood: #B8860B;
+            --wood-dark: #8B6914;
+            --leaves: #4CAF50;
+            --diamond: #4DD0E1;
+            --emerald: #17DD62;
+            --redstone: #FF3030;
+            --gold: #FFD700;
+            --sky-day: #87CEEB;
+            --sky-night: #0F1923;
+            --ui-bg: rgba(20, 20, 20, 0.88);
+            --ui-border: #5D5D5D;
+            --ui-shadow: #1A1A1A;
+            --text: #FFFFFF;
+            --text-dim: #B0B0B0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'VT323', monospace;
+            background: var(--sky-day);
+            color: var(--text);
+            overflow-x: hidden;
+            cursor: crosshair;
+            min-height: 100vh;
+            image-rendering: pixelated;
+        }
+
+        ::selection {
+            background: var(--grass);
+            color: #fff;
+        }
+
+        #loading {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(180deg, #1A2332 0%, #0F1923 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1.2s ease, visibility 1.2s ease;
+            padding: 20px;
+        }
+
+        #loading::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+                radial-gradient(1px 1px at 60% 70%, #fff, transparent),
+                radial-gradient(1px 1px at 80% 20%, #fff, transparent),
+                radial-gradient(2px 2px at 35% 80%, #fff, transparent),
+                radial-gradient(1px 1px at 90% 50%, #fff, transparent),
+                radial-gradient(1px 1px at 10% 60%, #fff, transparent);
+            background-size: 400px 400px;
+            opacity: 0.6;
+            animation: twinkle 4s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: .4
+            }
+
+            50% {
+                opacity: .9
+            }
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-logo {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(20px, 5vw, 56px);
+            color: #FFFF00;
+            text-shadow: 4px 4px 0 #3F3F00, 8px 8px 0 rgba(0, 0, 0, 0.4);
+            margin-bottom: 8px;
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 2;
+            animation: logoBob 2s ease-in-out infinite;
+        }
+
+        @keyframes logoBob {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-6px)
+            }
+        }
+
+        .loading-tagline {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #8BC34A;
+            margin-bottom: 50px;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .loading-bar {
+            width: min(440px, 80vw);
+            height: 28px;
+            background: #0A0A0A;
+            border: 3px solid #1A1A1A;
+            box-shadow: 0 0 0 3px #5D5D5D, inset 0 0 0 2px #2A2A2A;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .loading-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 50%, #4CAF50 100%);
+            background-size: 32px 100%;
+            animation: barScroll 0.6s linear infinite;
+            transition: width 0.3s ease;
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes barScroll {
+            to {
+                background-position: 32px 0;
+            }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #FFFFFF;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .loading-hint {
+            margin-top: 30px;
+            font-size: 18px;
+            color: #888;
+            position: relative;
+            z-index: 2;
+        }
+
+        #canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            display: block;
+        }
+
+        .ui-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 22px;
+            height: 22px;
+            pointer-events: none;
+            z-index: 40;
+            mix-blend-mode: difference;
+            opacity: 0.8;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #FFFFFF;
+        }
+
+        .crosshair::before {
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            transform: translateY(-50%);
+        }
+
+        .crosshair::after {
+            left: 50%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            transform: translateX(-50%);
+        }
+
+        .hotbar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px;
+            border: 3px solid #1A1A1A;
+            box-shadow: 0 0 0 3px #5D5D5D, 0 6px 16px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            pointer-events: auto;
+        }
+
+        .hotbar-slot {
+            width: 52px;
+            height: 52px;
+            background: rgba(139, 139, 139, 0.35);
+            border: 2px solid #1A1A1A;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.15), inset -2px -2px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .hotbar-slot:hover {
+            transform: translateY(-3px);
+        }
+
+        .hotbar-slot.active {
+            border: 3px solid #FFFFFF;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6), inset 2px 2px 0 rgba(255, 255, 255, 0.25);
+            transform: translateY(-4px);
+        }
+
+        .hotbar-slot .slot-icon {
+            width: 70%;
+            height: 70%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .hotbar-slot .slot-number {
+            position: absolute;
+            top: 1px;
+            left: 3px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .hotbar-slot .slot-label {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 #000;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .hotbar-slot:hover .slot-label,
+        .hotbar-slot.active .slot-label {
+            opacity: 1;
+        }
+
+        .status-bars {
+            position: fixed;
+            bottom: 84px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .bar-row {
+            display: flex;
+            gap: 1px;
+            justify-content: center;
+        }
+
+        .bar-pixel {
+            width: 14px;
+            height: 14px;
+            background: #FF3030;
+            display: inline-block;
+            clip-path: polygon(50% 100%, 0 35%, 25% 0, 50% 25%, 75% 0, 100% 35%);
+            filter: drop-shadow(1px 1px 0 #000);
+        }
+
+        .bar-pixel.hunger {
+            background: #C97139;
+        }
+
+        .bar-pixel.empty {
+            background: #2A1A1A;
+        }
+
+        .xp-bar {
+            position: fixed;
+            bottom: 78px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 240px;
+            height: 6px;
+            background: #1A1A1A;
+            border: 1px solid #000;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7FFF00, #ADFF2F);
+            width: 0%;
+            transition: width 0.4s ease;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .xp-level {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            color: #7FFF00;
+            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+            z-index: 51;
+            pointer-events: none;
+        }
+
+        .coords {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.65);
+            border: 2px solid #1A1A1A;
+            box-shadow: 0 0 0 2px #5D5D5D;
+            padding: 8px 12px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+            color: #FFFFFF;
+            z-index: 50;
+            pointer-events: none;
+            line-height: 1.6;
+        }
+
+        .coords .label {
+            color: #8BC34A;
+        }
+
+        .coords .value {
+            color: #FFD700;
+        }
+
+        .fps {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.65);
+            border: 2px solid #1A1A1A;
+            box-shadow: 0 0 0 2px #5D5D5D;
+            padding: 8px 12px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+            color: #7FFF00;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .achievement-toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(20, 20, 20, 0.96);
+            border: 3px solid #1A1A1A;
+            box-shadow: 0 0 0 3px #5D5D5D, 0 8px 24px rgba(0, 0, 0, 0.6);
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 100;
+            transform: translateX(420px);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 360px;
+            pointer-events: none;
+        }
+
+        .achievement-toast.show {
+            transform: translateX(0);
+        }
+
+        .achievement-toast.hide {
+            transform: translateX(420px);
+        }
+
+        .ach-icon {
+            width: 48px;
+            height: 48px;
+            background: #4CAF50;
+            border: 3px solid #1A1A1A;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.25), inset -2px -2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .ach-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .ach-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #FFD700;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 1px;
+        }
+
+        .ach-name {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 1px;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        main {
+            position: relative;
+            z-index: 20;
+        }
+
+        .section {
+            min-height: 100vh;
+            padding: 120px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .section-inner {
+            max-width: 1140px;
+            width: 100%;
+            position: relative;
+        }
+
+        .section-tag {
+            display: inline-block;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+            color: #8BC34A;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 12px;
+            border: 2px solid #1A1A1A;
+            box-shadow: 0 0 0 2px #5D5D5D;
+            margin-bottom: 24px;
+            letter-spacing: 2px;
+        }
+
+        .section-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(22px, 4.5vw, 44px);
+            color: #FFFFFF;
+            text-shadow: 4px 4px 0 #1A1A1A, 8px 8px 0 rgba(0, 0, 0, 0.4);
+            margin-bottom: 18px;
+            line-height: 1.3;
+            letter-spacing: 2px;
+        }
+
+        .section-title .accent {
+            color: #FFD700;
+        }
+
+        .section-title .grass {
+            color: #8BC34A;
+        }
+
+        .section-title .diamond {
+            color: #4DD0E1;
+        }
+
+        .section-title .redstone {
+            color: #FF3030;
+        }
+
+        .section-desc {
+            font-size: 22px;
+            color: #FFFFFF;
+            text-shadow: 2px 2px 0 #000;
+            max-width: 700px;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .hero {
+            text-align: center;
+            flex-direction: column;
+        }
+
+        .hero-content {
+            text-align: center;
+        }
+
+        .join-message {
+            display: inline-block;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            color: #FFD700;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 14px;
+            border: 2px solid #1A1A1A;
+            box-shadow: 0 0 0 2px #5D5D5D;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 0 #000;
+            animation: messagePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes messagePulse {
+
+            0%,
+            100% {
+                opacity: .85
+            }
+
+            50% {
+                opacity: 1
+            }
+        }
+
+        .hero-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(28px, 8vw, 88px);
+            color: #FFFFFF;
+            text-shadow: 5px 5px 0 #1A1A1A, 10px 10px 0 rgba(0, 0, 0, 0.5);
+            letter-spacing: 4px;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            animation: titleBob 4s ease-in-out infinite;
+        }
+
+        .hero-title .name-line {
+            display: block;
+        }
+
+        .hero-title .name-line:first-child {
+            color: #8BC34A;
+            text-shadow: 5px 5px 0 #2A4A1A, 10px 10px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes titleBob {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-8px)
+            }
+        }
+
+        .hero-subtitle {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(10px, 2vw, 14px);
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #1A1A1A;
+            letter-spacing: 3px;
+            margin-bottom: 50px;
+        }
+
+        .scroll-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #FFFFFF;
+            text-shadow: 2px 2px 0 #000;
+            letter-spacing: 2px;
+            animation: scrollBounce 1.6s ease-in-out infinite;
+        }
+
+        @keyframes scrollBounce {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(10px)
+            }
+        }
+
+        .player-card {
+            background: rgba(20, 20, 20, 0.92);
+            border: 4px solid #1A1A1A;
+            box-shadow: 0 0 0 4px #5D5D5D, 0 12px 32px rgba(0, 0, 0, 0.6);
+            padding: 36px;
+            padding-top: 52px;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 36px;
+            position: relative;
+        }
+
+        .player-card::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            height: 32px;
+            background: linear-gradient(180deg, #4A4A4A 0%, #2A2A2A 100%);
+            border: 4px solid #1A1A1A;
+        }
+
+        .player-card::after {
+            content: 'PLAYER INFO';
+            position: absolute;
+            top: -4px;
+            left: 0;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            padding-left: 16px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #FFD700;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 2px;
+            z-index: 1;
+        }
+
+        .player-avatar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .avatar-skin {
+            width: 180px;
+            height: 220px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid #1A1A1A;
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.1), inset -2px -2px 0 rgba(0, 0, 0, 0.4);
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            padding: 8px;
+            gap: 1px;
+            position: relative;
+        }
+
+        .avatar-skin .pixel {
+            background: transparent;
+        }
+
+        .avatar-skin .pixel.head {
+            background: #C68642;
+        }
+
+        .avatar-skin .pixel.hair {
+            background: #3A2412;
+        }
+
+        .avatar-skin .pixel.eye {
+            background: #FFFFFF;
+        }
+
+        .avatar-skin .pixel.pupil {
+            background: #1A1A2A;
+        }
+
+        .avatar-skin .pixel.mouth {
+            background: #6B3F22;
+        }
+
+        .avatar-skin .pixel.body {
+            background: #2196F3;
+        }
+
+        .avatar-skin .pixel.arm {
+            background: #C68642;
+        }
+
+        .avatar-skin .pixel.leg {
+            background: #1A237E;
+        }
+
+        .player-tag {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            color: #FFD700;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 2px;
+        }
+
+        .player-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .player-name {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(18px, 3vw, 26px);
+            color: #FFFFFF;
+            text-shadow: 3px 3px 0 #1A1A1A;
+            letter-spacing: 2px;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .player-role {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #8BC34A;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 1px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #1A1A1A;
+            box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .stat-row .stat-label {
+            color: #8BC34A;
+        }
+
+        .stat-row .stat-value {
+            color: #FFD700;
+        }
+
+        .player-bio {
+            font-size: 22px;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 #000;
+            line-height: 1.5;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 14px 16px;
+            border: 2px solid #1A1A1A;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 14px;
+            margin-top: 32px;
+        }
+
+        .inv-slot {
+            aspect-ratio: 1;
+            background: rgba(139, 139, 139, 0.35);
+            border: 3px solid #1A1A1A;
+            box-shadow: 0 0 0 3px #5D5D5D, inset 2px 2px 0 rgba(255, 255, 255, 0.18), inset -2px -2px 0 rgba(0, 0, 0, 0.4);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            padding: 8px;
+        }
+
+        .inv-slot:hover {
+            transform: translateY(-6px) scale(1.04);
+            box-shadow: 0 0 0 3px #FFFFFF, 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .inv-icon {
+            width: 50px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .inv-icon .block-cube {
+            width: 50px;
+            height: 50px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-20deg) rotateY(35deg);
+            transition: transform 0.4s;
+        }
+
+        .inv-slot:hover .inv-icon .block-cube {
+            transform: rotateX(-20deg) rotateY(395deg);
+        }
+
+        .block-cube .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(0, 0, 0, 0.4);
+        }
+
+        .block-cube .face.front {
+            transform: translateZ(25px);
+        }
+
+        .block-cube .face.back {
+            transform: translateZ(-25px) rotateY(180deg);
+        }
+
+        .block-cube .face.right {
+            transform: rotateY(90deg) translateZ(25px);
+            filter: brightness(0.85);
+        }
+
+        .block-cube .face.left {
+            transform: rotateY(-90deg) translateZ(25px);
+            filter: brightness(0.7);
+        }
+
+        .block-cube .face.top {
+            transform: rotateX(90deg) translateZ(25px);
+            filter: brightness(1.15);
+        }
+
+        .block-cube .face.bottom {
+            transform: rotateX(-90deg) translateZ(25px);
+            filter: brightness(0.55);
+        }
+
+        .inv-name {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .inv-level {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px;
+            color: #FFD700;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 1px;
+        }
+
+        .crafting-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 32px;
+        }
+
+        .project-card {
+            background: rgba(20, 20, 20, 0.92);
+            border: 4px solid #1A1A1A;
+            box-shadow: 0 0 0 4px #5D5D5D, 0 8px 24px rgba(0, 0, 0, 0.5);
+            padding: 24px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A, #4CAF50);
+        }
+
+        .project-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 0 0 4px #FFD700, 0 12px 28px rgba(0, 0, 0, 0.6);
+        }
+
+        .project-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+            padding-top: 8px;
+        }
+
+        .project-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid #1A1A1A;
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.15), inset -2px -2px 0 rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .project-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 13px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #000;
+            letter-spacing: 1px;
+            line-height: 1.4;
+        }
+
+        .project-tag {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #8BC34A;
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+
+        .project-desc {
+            font-size: 20px;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 #000;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tech-pill {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #FFFFFF;
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4CAF50;
+            padding: 4px 8px;
+            letter-spacing: 1px;
+        }
+
+        .advancement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 32px;
+        }
+
+        .advancement {
+            background: rgba(20, 20, 20, 0.92);
+            border: 4px solid #1A1A1A;
+            box-shadow: 0 0 0 4px #5D5D5D, 0 6px 18px rgba(0, 0, 0, 0.5);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .advancement:hover {
+            transform: translateX(8px);
+            box-shadow: 0 0 0 4px #8BC34A, 0 6px 18px rgba(0, 0, 0, 0.5);
+        }
+
+        .advancement::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background: linear-gradient(180deg, #FFD700, #FFA000);
+        }
+
+        .adv-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid #1A1A1A;
+            box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.18), inset -2px -2px 0 rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .adv-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .adv-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 13px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #000;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            overflow-wrap: anywhere;
+        }
+
+        .adv-meta {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #8BC34A;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .adv-desc {
+            font-size: 20px;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 #000;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .adv-status {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+            color: #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            padding: 6px 10px;
+            letter-spacing: 1px;
+            flex-shrink: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .server-card {
+            background: rgba(20, 20, 20, 0.92);
+            border: 4px solid #1A1A1A;
+            box-shadow: 0 0 0 4px #5D5D5D, 0 12px 32px rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 40px;
+            position: relative;
+        }
+
+        .server-card::before {
+            content: 'MULTIPLAYER · CONNECT';
+            position: absolute;
+            top: -16px;
+            left: 24px;
+            background: #1A1A1A;
+            border: 3px solid #1A1A1A;
+            box-shadow: 0 0 0 3px #5D5D5D;
+            padding: 6px 14px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #8BC34A;
+            letter-spacing: 2px;
+        }
+
+        .server-info {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .server-name {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 18px;
+            color: #FFFFFF;
+            text-shadow: 3px 3px 0 #1A1A1A;
+            letter-spacing: 2px;
+            line-height: 1.4;
+        }
+
+        .server-motd {
+            font-size: 22px;
+            color: #8BC34A;
+            text-shadow: 1px 1px 0 #000;
+            line-height: 1.5;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid #8BC34A;
+        }
+
+        .server-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .server-stat {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #1A1A1A;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .server-stat .stat-num {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 16px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .server-stat .stat-lbl {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #8BC34A;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .connect-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .connect-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid #1A1A1A;
+            box-shadow: 0 0 0 3px #5D5D5D, inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            text-decoration: none;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .connect-btn:hover {
+            background: rgba(76, 175, 80, 0.25);
+            border-color: #8BC34A;
+            box-shadow: 0 0 0 3px #8BC34A, 0 4px 12px rgba(0, 0, 0, 0.4);
+            transform: translateX(4px);
+        }
+
+        .connect-btn .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid #1A1A1A;
+            flex-shrink: 0;
+        }
+
+        .connect-btn .btn-icon svg {
+            width: 22px;
+            height: 22px;
+            display: block;
+        }
+
+        .connect-btn .fill-logo {
+            fill: currentColor;
+        }
+
+        .connect-btn .stroke-logo {
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 2;
+        }
+
+        .connect-btn .btn-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .connect-btn .btn-arrow {
+            color: #8BC34A;
+            font-size: 14px;
+        }
+
+        .ping-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #4CAF50;
+            letter-spacing: 1px;
+        }
+
+        .ping-dot {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #4CAF50;
+            animation: pingPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes pingPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.8)
+            }
+        }
+
+        .footer {
+            position: relative;
+            z-index: 20;
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-top: 4px solid #1A1A1A;
+            box-shadow: 0 0 0 4px #5D5D5D;
+        }
+
+        .footer-text {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #8BC34A;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 2px;
+            line-height: 2;
+        }
+
+        .footer-text .gold {
+            color: #FFD700;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .player-card {
+                grid-template-columns: 1fr;
+                padding: 24px;
+                padding-top: 52px;
+            }
+
+            .server-card {
+                grid-template-columns: 1fr;
+                padding: 24px;
+            }
+
+            .hotbar-slot {
+                width: 40px;
+                height: 40px;
+            }
+
+            .hotbar-slot .slot-icon {
+                font-size: 18px;
+            }
+
+            .hotbar-slot .slot-label {
+                display: none;
+            }
+
+            .coords,
+            .fps {
+                font-size: 8px;
+                padding: 6px 8px;
+            }
+
+            .achievement-toast {
+                top: 68px;
+                right: 12px;
+                left: 12px;
+                max-width: none;
+                width: auto;
+                padding: 10px 12px;
+                gap: 10px;
+                transform: translateX(calc(100% + 24px));
+            }
+
+            .achievement-toast.hide {
+                transform: translateX(calc(100% + 24px));
+            }
+
+            .ach-icon {
+                width: 42px;
+                height: 42px;
+                border-width: 2px;
+                font-size: 20px;
+            }
+
+            .ach-title {
+                font-size: 7px;
+                line-height: 1.4;
+            }
+
+            .ach-name {
+                font-size: 9px;
+            }
+
+            .advancement-list {
+                gap: 14px;
+            }
+
+            .advancement {
+                display: grid;
+                grid-template-columns: 56px minmax(0, 1fr);
+                grid-template-areas:
+                    "icon content"
+                    ". status";
+                align-items: start;
+                gap: 12px 14px;
+                padding: 16px 14px 16px 18px;
+            }
+
+            .advancement:hover {
+                transform: none;
+            }
+
+            .adv-icon {
+                grid-area: icon;
+                width: 56px;
+                height: 56px;
+                font-size: 28px;
+            }
+
+            .adv-content {
+                grid-area: content;
+            }
+
+            .adv-title {
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .adv-meta {
+                font-size: 7px;
+            }
+
+            .adv-desc {
+                font-size: 18px;
+            }
+
+            .adv-status {
+                grid-area: status;
+                justify-self: start;
+                font-size: 8px;
+            }
+
+            .section {
+                padding: 100px 16px;
+            }
+
+            .player-name {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hotbar-slot {
+                width: 36px;
+                height: 36px;
+            }
+
+            .bar-pixel {
+                width: 11px;
+                height: 11px;
+            }
+
+            .status-bars {
+                bottom: 70px;
+            }
+
+            .xp-bar {
+                bottom: 64px;
+                width: 200px;
+            }
+
+            .xp-level {
+                bottom: 66px;
+                font-size: 9px;
+            }
+
+            .hotbar {
+                bottom: 18px;
+            }
+
+            .achievement-toast {
+                top: 58px;
+                right: 8px;
+                left: 8px;
+                padding: 8px 10px;
+                gap: 8px;
+                transform: translateX(calc(100% + 16px));
+            }
+
+            .achievement-toast.hide {
+                transform: translateX(calc(100% + 16px));
+            }
+
+            .ach-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+
+            .ach-name {
+                font-size: 8px;
+            }
+
+            .advancement {
+                grid-template-columns: 46px minmax(0, 1fr);
+                gap: 10px 12px;
+                padding: 14px 12px 14px 16px;
+            }
+
+            .adv-icon {
+                width: 46px;
+                height: 46px;
+                border-width: 2px;
+                font-size: 24px;
+            }
+
+            .adv-title {
+                font-size: 9px;
+            }
+
+            .adv-desc {
+                font-size: 17px;
+                line-height: 1.35;
+            }
+
+            .adv-status {
+                font-size: 7px;
+                padding: 5px 8px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading">
+        <div class="loading-logo">nkingsapbe</div>
+        <div class="loading-tagline">— BCA WORLD PORTFOLIO —</div>
+        <div class="loading-bar">
+            <div class="loading-fill" id="loadingFill"></div>
+        </div>
+        <div class="loading-text" id="loadingText">Generating World... 0%</div>
+        <div class="loading-hint">Building terrain · Spawning mobs · Placing blocks</div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="ui-layer">
+        <div class="crosshair"></div>
+        <div class="coords">
+            <div><span class="label">XYZ</span> <span class="value" id="coordX">0</span> / <span class="value"
+                    id="coordY">0</span> / <span class="value" id="coordZ">0</span></div>
+            <div><span class="label">BIOME</span> <span class="value" id="biome">PLAINS</span></div>
+        </div>
+        <div class="fps" id="fpsCounter">FPS: 60</div>
+        <div class="status-bars">
+            <div class="bar-row" id="hearts"></div>
+            <div class="bar-row" id="hunger"></div>
+        </div>
+        <div class="xp-bar">
+            <div class="xp-fill" id="xpFill"></div>
+        </div>
+        <div class="xp-level" id="xpLevel">LVL 1</div>
+        <nav class="hotbar" id="hotbar">
+            <button class="hotbar-slot active" data-section="hero"><span class="slot-number">1</span><span
+                    class="slot-icon" style="color:#8BC34A;">▣</span><span class="slot-label">SPAWN</span></button>
+            <button class="hotbar-slot" data-section="about"><span class="slot-number">2</span><span class="slot-icon"
+                    style="color:#C68642;">☺</span><span class="slot-label">PLAYER</span></button>
+            <button class="hotbar-slot" data-section="skills"><span class="slot-number">3</span><span class="slot-icon"
+                    style="color:#4DD0E1;">◆</span><span class="slot-label">SKILLS</span></button>
+            <button class="hotbar-slot" data-section="projects"><span class="slot-number">4</span><span
+                    class="slot-icon" style="color:#FFD700;">⛏</span><span class="slot-label">BUILDS</span></button>
+            <button class="hotbar-slot" data-section="education"><span class="slot-number">5</span><span
+                    class="slot-icon" style="color:#17DD62;">★</span><span class="slot-label">QUESTS</span></button>
+            <button class="hotbar-slot" data-section="contact"><span class="slot-number">6</span><span class="slot-icon"
+                    style="color:#FF3030;">◈</span><span class="slot-label">CONNECT</span></button>
+        </nav>
+        <div class="achievement-toast" id="achToast">
+            <div class="ach-icon" id="achIcon">★</div>
+            <div class="ach-content">
+                <div class="ach-title">ADVANCEMENT MADE!</div>
+                <div class="ach-name" id="achName">Welcome to the World</div>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <section class="section hero" id="hero">
+            <div class="hero-content">
+                <div class="join-message">[ Player joined the game ]</div>
+                <h1 class="hero-title">
+                    <span class="name-line">nkingsapbe</span>
+                    <span class="name-line">nring</span>
+                </h1>
+                <p class="hero-subtitle">BCA STUDENT · CODER · WORLD BUILDER</p>
+                <div class="scroll-hint">▼ SCROLL TO EXPLORE ▼</div>
+            </div>
+        </section>
+
+        <section class="section" id="about">
+            <div class="section-inner">
+                <span class="section-tag reveal">>> PLAYER_PROFILE.DAT</span>
+                <h2 class="section-title reveal">THE <span class="grass">PLAYER</span> BEHIND<br>THE SCREEN</h2>
+                <p class="section-desc reveal">A first-year BCA student mining the depths of computer science, crafting
+                    code by day, debugging by night.</p>
+                <div class="player-card reveal">
+                    <div class="player-avatar">
+                        <div class="avatar-skin" id="avatarSkin"></div>
+                        <div class="player-tag">LVL 19 · CODER</div>
+                    </div>
+                    <div class="player-meta">
+                        <div>
+                            <div class="player-name">nkingsapbe nring</div>
+                            <div class="player-role" style="margin-top:8px;">BCA STUDENT · BATCH 2024-2027</div>
+                        </div>
+                        <div class="stat-row"><span class="stat-label">CLASS</span><span class="stat-value">BCA — Year
+                                1</span></div>
+                        <div class="stat-row"><span class="stat-label">HP</span><span class="stat-value">20 / 20</span>
+                        </div>
+                        <div class="stat-row"><span class="stat-label">SERVER</span><span class="stat-value">INDIA ·
+                                ASIA</span></div>
+                        <div class="stat-row"><span class="stat-label">STATUS</span><span class="stat-value"
+                                style="color:#4CAF50;">● ONLINE</span></div>
+                        <div class="player-bio">Currently mining XP in <strong style="color:#FFD700;">Bachelor of
+                                Computer Applications</strong>. Fascinated by web tech, problem solving, and building
+                            things that didn't exist before. Picks up new tools like a fresh pickaxe — ready to dig in.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="skills">
+            <div class="section-inner">
+                <span class="section-tag reveal">>> INVENTORY_OPEN</span>
+                <h2 class="section-title reveal">SKILL <span class="diamond">INVENTORY</span><br>ITEMS COLLECTED</h2>
+                <p class="section-desc reveal">Tools gathered across the journey. Each block mastered through study,
+                    practice, and many debug sessions.</p>
+                <div class="inventory-grid reveal" id="skillsGrid"></div>
+            </div>
+        </section>
+
+        <section class="section" id="projects">
+            <div class="section-inner">
+                <span class="section-tag reveal">>> CRAFTING_TABLE.OPEN</span>
+                <h2 class="section-title reveal">RECENT <span class="accent">BUILDS</span><br>& CRAFTED PROJECTS</h2>
+                <p class="section-desc reveal">Structures constructed during the grind. Each project = new technique
+                    learned, new mobs defeated (bugs).</p>
+                <div class="crafting-grid reveal" id="projectsGrid"></div>
+            </div>
+        </section>
+
+        <section class="section" id="education">
+            <div class="section-inner">
+                <span class="section-tag reveal">>> ADVANCEMENTS_LIST</span>
+                <h2 class="section-title reveal">QUEST LOG &<br><span class="grass">ADVANCEMENTS</span></h2>
+                <p class="section-desc reveal">Milestones unlocked on the education journey. Side quests included —
+                    every skill counts toward the main story.</p>
+                <div class="advancement-list reveal" id="advList"></div>
+            </div>
+        </section>
+
+        <section class="section" id="contact">
+            <div class="section-inner">
+                <span class="section-tag reveal">>> MULTIPLAYER_MENU</span>
+                <h2 class="section-title reveal">DIRECT <span class="redstone">CONNECT</span><br>JOIN MY SERVER</h2>
+                <p class="section-desc reveal">Player looking for party. Open for collaborations, internships, project
+                    invites, and good conversations about code.</p>
+                <div class="server-card reveal">
+                    <div class="server-info">
+                        <div class="server-name">nkingsapbe WORLD</div>
+                        <div class="server-motd">"Building things one block at a time. Always exploring, always
+                            learning. Come say hi — PvP is optional."</div>
+                        <div class="server-stats">
+                            <div class="server-stat">
+                                <div class="stat-num">24/7</div>
+                                <div class="stat-lbl">ONLINE</div>
+                            </div>
+                            <div class="server-stat">
+                                <div class="stat-num">∞</div>
+                                <div class="stat-lbl">SLOTS</div>
+                            </div>
+                            <div class="server-stat">
+                                <div class="stat-num">1ms</div>
+                                <div class="stat-lbl">PING</div>
+                            </div>
+                            <div class="server-stat">
+                                <div class="stat-num">v2.4</div>
+                                <div class="stat-lbl">VERSION</div>
+                            </div>
+                        </div>
+                        <div class="ping-indicator"><span class="ping-dot"></span>SIGNAL STRONG · READY TO CONNECT</div>
+                    </div>
+                    <div class="connect-options">
+                        <a href="mailto:nkingsapbe@gmail.com" class="connect-btn"><span class="btn-icon"
+                                style="color:#FFD700;">✉</span><span class="btn-text">SEND MAIL<br><span
+                                    style="font-size:8px;color:#8BC34A;">nkingsapbe@gmail.com</span></span><span
+                                class="btn-arrow">►</span></a>
+                        <a href="https://github.com/nkingsap" class="connect-btn" target="_blank"
+                            rel="noopener noreferrer"><span class="btn-icon" style="color:#FFFFFF;"><svg
+                                    class="fill-logo" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path
+                                        d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.2 1.77 1.2 1.04 1.76 2.72 1.25 3.38.96.11-.75.41-1.25.74-1.54-2.57-.29-5.27-1.29-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .98-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.64 1.59.24 2.77.12 3.06.74.81 1.18 1.85 1.18 3.11 0 4.45-2.71 5.42-5.29 5.71.42.36.79 1.08.79 2.18v3.23c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z" />
+                                </svg></span><span class="btn-text">GITHUB<br><span
+                                    style="font-size:8px;color:#8BC34A;">/nkingsap</span></span><span
+                                class="btn-arrow">►</span></a>
+                        <a href="https://instagram.com/nkingsap" class="connect-btn" target="_blank"
+                            rel="noopener noreferrer"><span class="btn-icon" style="color:#E1306C;"><svg
+                                    class="stroke-logo" viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="3" y="3" width="18" height="18" rx="5" />
+                                    <circle cx="12" cy="12" r="4" />
+                                    <circle cx="17.5" cy="6.5" r="1.2" />
+                                </svg></span><span class="btn-text">INSTAGRAM<br><span
+                                    style="font-size:8px;color:#8BC34A;">@nkingsap</span></span><span
+                                class="btn-arrow">►</span></a>
+                        <a href="https://wa.me/919863330216" class="connect-btn" target="_blank"
+                            rel="noopener noreferrer"><span class="btn-icon" style="color:#25D366;"><svg
+                                    class="fill-logo" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path
+                                        d="M20.52 3.48A11.8 11.8 0 0 0 12.13 0C5.61 0 .31 5.3.31 11.81c0 2.08.54 4.11 1.58 5.9L.21 24l6.44-1.69a11.82 11.82 0 0 0 5.48 1.4h.01c6.52 0 11.82-5.3 11.82-11.82 0-3.16-1.23-6.13-3.44-8.41ZM12.14 21.7h-.01a9.8 9.8 0 0 1-5-1.37l-.36-.22-3.82 1 1.02-3.72-.24-.38a9.78 9.78 0 0 1-1.5-5.2c0-5.41 4.4-9.81 9.82-9.81a9.74 9.74 0 0 1 6.94 2.88 9.75 9.75 0 0 1 2.88 6.95c0 5.42-4.4 9.87-9.73 9.87Zm5.39-7.36c-.3-.15-1.74-.86-2.01-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47a8.92 8.92 0 0 1-1.65-2.05c-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.74-.71 1.99-1.39.25-.68.25-1.27.17-1.39-.07-.13-.27-.2-.56-.35Z" />
+                                </svg></span><span class="btn-text">WHATSAPP<br><span
+                                    style="font-size:8px;color:#8BC34A;">9863330216</span></span><span
+                                class="btn-arrow">►</span></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-text">
+            <span class="gold">nkingsapbe nring</span> · BCA STUDENT PORTFOLIO<br>
+            CRAFTED WITH <span style="color:#FF3030;">♥</span> AND MANY BLOCKS · © 2024<br>
+            <span style="color:#888;">— WORLD SAVED · 3,847 BLOCKS PLACED —</span>
+        </div>
+    </footer>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // ===================== DATA =====================
+        const skills = [
+            { name: 'HTML', level: 'LV 85', colors: { top: '#E34F26', side: '#C2401B', bottom: '#8B2C13' } },
+            { name: 'CSS', level: 'LV 78', colors: { top: '#264DE4', side: '#1E3CB8', bottom: '#152A85' } },
+            { name: 'JavaScript', level: 'LV 72', colors: { top: '#F7DF1E', side: '#D4BE15', bottom: '#9C8B0E' } },
+            { name: 'Python', level: 'LV 80', colors: { top: '#3776AB', side: '#2A5A85', bottom: '#1E4060' } },
+            { name: 'Java', level: 'LV 65', colors: { top: '#ED8B00', side: '#C2750B', bottom: '#8C5408' } },
+            { name: 'C / C++', level: 'LV 60', colors: { top: '#5C6BC0', side: '#4555A4', bottom: '#324078' } },
+            { name: 'SQL', level: 'LV 70', colors: { top: '#00758F', side: '#005A6E', bottom: '#00404E' } },
+            { name: 'PHP', level: 'LV 55', colors: { top: '#777BB4', side: '#5C6390', bottom: '#424868' } },
+            { name: 'Git', level: 'LV 75', colors: { top: '#F05032', side: '#CC3F26', bottom: '#992E1A' } },
+            { name: 'React', level: 'LV 50', colors: { top: '#61DAFB', side: '#4DB8D9', bottom: '#388AA0' } },
+            { name: 'Node.js', level: 'LV 48', colors: { top: '#83CD29', side: '#66A21F', bottom: '#487715' } },
+            { name: 'Linux', level: 'LV 62', colors: { top: '#FCC624', side: '#CC9F1D', bottom: '#997615' } },
+        ];
+
+        const projects = [
+            { icon: '📚', title: 'Library Management System', tag: 'JAVA · MYSQL', desc: 'A full desktop app for tracking books, members, and loans. Built with Java Swing and MySQL. Features search, fines, and overdue alerts.', tech: ['Java', 'Swing', 'MySQL', 'JDBC'] },
+            { icon: '🌦️', title: 'Weather Dashboard', tag: 'JAVASCRIPT · API', desc: 'Real-time weather app using OpenWeather API. Shows 7-day forecast, geolocation, animated icons. Responsive across devices.', tech: ['JavaScript', 'REST API', 'CSS3', 'LocalStorage'] },
+            { icon: '🛒', title: 'Campus Marketplace', tag: 'PHP · WEB', desc: 'A student-only buy/sell platform for the campus. Listings, chat, and admin moderation panel. Built in PHP with MySQL backend.', tech: ['PHP', 'MySQL', 'Bootstrap', 'jQuery'] },
+            { icon: '🧮', title: 'Smart Calculator Suite', tag: 'PYTHON · TKINTER', desc: 'Calculator with scientific functions, history log, and unit converter. Bonus: a small graph plotter for trig functions.', tech: ['Python', 'Tkinter', 'Matplotlib'] },
+            { icon: '🎯', title: 'Quiz Battle Game', tag: 'HTML5 · CANVAS', desc: 'A timed multiple-choice quiz game with leaderboard, categories, and streak multipliers. Top scores saved between sessions.', tech: ['HTML5', 'Canvas', 'JavaScript', 'CSS3'] },
+            { icon: '🌐', title: 'Personal Portfolio', tag: 'CREATIVE · 3D', desc: 'This very website! A Minecraft-inspired portfolio built with Three.js, custom shaders, and a healthy dose of nostalgia.', tech: ['Three.js', 'WebGL', 'CSS3', 'Vanilla JS'] },
+        ];
+
+        const advancements = [
+            { icon: '🎓', title: 'Getting an Education', meta: 'BCA · 2024 — 2027 · IN PROGRESS', desc: 'Enrolled in Bachelor of Computer Applications. Currently grinding Year 1 — programming fundamentals, data structures, and digital logic on the curriculum.', status: '62% DONE' },
+            { icon: '🏫', title: 'Higher Secondary Complete', meta: 'COMPLETED · 2024', desc: 'Completed 10+2 in Science stream. Built the foundation in mathematics, physics, and computer science that made BCA possible.', status: 'UNLOCKED' },
+            { icon: '🏅', title: 'Secondary School Graduation', meta: 'COMPLETED · 2022', desc: 'Passed Class 10 with distinction. First exposure to programming via LOGO and BASIC — the spark that started the journey.', status: 'UNLOCKED' },
+            { icon: '💻', title: 'Code Workshop Certifications', meta: 'SIDE QUESTS · ONGOING', desc: 'Online certifications in Web Development (freeCodeCamp), Python (HackerRank), and Database Design (Coursera). Always grinding XP.', status: '5 BADGES' },
+            { icon: '🤝', title: 'College Tech Club Member', meta: 'COMMUNITY · ACTIVE', desc: 'Active member of the college coding club. Participated in 3 hackathons and helped organize a workshop on Git & GitHub for juniors.', status: 'GUILD' },
+        ];
+
+        function buildAvatar() {
+            const skin = document.getElementById('avatarSkin');
+            const layout = [
+                ['hair', 'hair', 'hair', 'hair', 'hair', 'hair', 'hair', 'hair'],
+                ['hair', 'hair', 'hair', 'hair', 'hair', 'hair', 'hair', 'hair'],
+                ['head', 'head', 'head', 'head', 'head', 'head', 'head', 'head'],
+                ['head', 'eye', 'eye', 'pupil', 'pupil', 'eye', 'eye', 'head'],
+                ['head', 'head', 'head', 'mouth', 'mouth', 'head', 'head', 'head'],
+                ['head', 'head', 'head', 'head', 'head', 'head', 'head', 'head'],
+                ['body', 'body', 'body', 'body', 'body', 'body', 'body', 'body'],
+                ['leg', 'leg', 'leg', 'leg', 'leg', 'leg', 'leg', 'leg'],
+            ];
+            layout.forEach(row => row.forEach(type => {
+                const div = document.createElement('div');
+                div.className = 'pixel ' + type;
+                skin.appendChild(div);
+            }));
+        }
+        buildAvatar();
+
+        function buildSkills() {
+            const grid = document.getElementById('skillsGrid');
+            skills.forEach(s => {
+                const slot = document.createElement('div');
+                slot.className = 'inv-slot';
+                slot.innerHTML = `
+      <div class="inv-icon"><div class="block-cube">
+        <div class="face front" style="background:${s.colors.side}"></div>
+        <div class="face back" style="background:${s.colors.side}"></div>
+        <div class="face right" style="background:${s.colors.side}"></div>
+        <div class="face left" style="background:${s.colors.side}"></div>
+        <div class="face top" style="background:${s.colors.top}"></div>
+        <div class="face bottom" style="background:${s.colors.bottom}"></div>
+      </div></div>
+      <div class="inv-name">${s.name}</div>
+      <div class="inv-level">${s.level}</div>`;
+                grid.appendChild(slot);
+            });
+        }
+        buildSkills();
+
+        function buildProjects() {
+            const grid = document.getElementById('projectsGrid');
+            projects.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.innerHTML = `
+      <div class="project-head">
+        <div class="project-icon">${p.icon}</div>
+        <div><div class="project-title">${p.title}</div><div class="project-tag">${p.tag}</div></div>
+      </div>
+      <div class="project-desc">${p.desc}</div>
+      <div class="project-tech">${p.tech.map(t => `<span class="tech-pill">${t}</span>`).join('')}</div>`;
+                grid.appendChild(card);
+            });
+        }
+        buildProjects();
+
+        function buildAdvancements() {
+            const list = document.getElementById('advList');
+            advancements.forEach(a => {
+                const div = document.createElement('div');
+                div.className = 'advancement';
+                div.innerHTML = `
+      <div class="adv-icon">${a.icon}</div>
+      <div class="adv-content">
+        <div class="adv-title">${a.title}</div>
+        <div class="adv-meta">${a.meta}</div>
+        <div class="adv-desc">${a.desc}</div>
+      </div>
+      <div class="adv-status">${a.status}</div>`;
+                list.appendChild(div);
+            });
+        }
+        buildAdvancements();
+
+        function buildStatusBars() {
+            const hearts = document.getElementById('hearts');
+            const hunger = document.getElementById('hunger');
+            for (let i = 0; i < 10; i++) {
+                const h = document.createElement('span');
+                h.className = 'bar-pixel';
+                hearts.appendChild(h);
+                const hu = document.createElement('span');
+                hu.className = 'bar-pixel hunger';
+                hunger.appendChild(hu);
+            }
+        }
+        buildStatusBars();
+
+        // ===================== THREE.JS WORLD (OPTIMIZED) =====================
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 35, 95);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 180);
+        camera.position.set(0, 18, 35);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        // Cap pixel ratio lower for smoother performance
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+
+        // Lighting
+        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambient);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        sunLight.position.set(40, 60, 20);
+        scene.add(sunLight);
+        const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x4A6741, 0.5);
+        scene.add(hemiLight);
+
+        // === Procedural Block Textures ===
+        function makeTexture(palette) {
+            const c = document.createElement('canvas');
+            c.width = 16; c.height = 16;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = palette.base;
+            ctx.fillRect(0, 0, 16, 16);
+            for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) {
+                const r = Math.random();
+                if (r > 0.85) { ctx.fillStyle = palette.light; ctx.fillRect(i, j, 1, 1); }
+                else if (r > 0.7) { ctx.fillStyle = palette.dark; ctx.fillRect(i, j, 1, 1); }
+            }
+            const tex = new THREE.CanvasTexture(c);
+            tex.magFilter = THREE.NearestFilter;
+            tex.minFilter = THREE.NearestFilter;
+            return tex;
+        }
+
+        function makeGrassSideTexture() {
+            const c = document.createElement('canvas');
+            c.width = 16; c.height = 16;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#8B5A2B';
+            ctx.fillRect(0, 0, 16, 16);
+            for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) {
+                const r = Math.random();
+                if (r > 0.85) { ctx.fillStyle = '#A0673A'; ctx.fillRect(i, j, 1, 1); }
+                else if (r > 0.7) { ctx.fillStyle = '#6F4E37'; ctx.fillRect(i, j, 1, 1); }
+            }
+            ctx.fillStyle = '#7CB342';
+            ctx.fillRect(0, 0, 16, 5);
+            for (let i = 0; i < 16; i++) {
+                const h = 4 + Math.floor(Math.random() * 3);
+                ctx.fillStyle = Math.random() > 0.5 ? '#8BC34A' : '#5D9B33';
+                ctx.fillRect(i, h, 1, 1);
+            }
+            const tex = new THREE.CanvasTexture(c);
+            tex.magFilter = THREE.NearestFilter;
+            tex.minFilter = THREE.NearestFilter;
+            return tex;
+        }
+
+        const blockTextures = {
+            grassTop: makeTexture({ base: '#7CB342', light: '#9CCC65', dark: '#5D9B33' }),
+            grassSide: makeGrassSideTexture(),
+            dirt: makeTexture({ base: '#8B5A2B', light: '#A0673A', dark: '#6F4E37' }),
+            stone: makeTexture({ base: '#828282', light: '#9B9B9B', dark: '#6E6E6E' }),
+            sand: makeTexture({ base: '#E0D090', light: '#F0E0A0', dark: '#B0A070' }),
+            wood: makeTexture({ base: '#6E5A3E', light: '#8B7050', dark: '#54432B' }),
+            woodTop: makeTexture({ base: '#8B6914', light: '#A8851C', dark: '#6E530F' }),
+            leaves: makeTexture({ base: '#4CAF50', light: '#5DD362', dark: '#3A7D3E' }),
+            water: makeTexture({ base: '#3A7DE0', light: '#5A9DFF', dark: '#2A5DB0' }),
+            planks: makeTexture({ base: '#B8860B', light: '#D4A017', dark: '#8B6914' }),
+            cobble: makeTexture({ base: '#7A7A7A', light: '#9B9B9B', dark: '#5A5A5A' }),
+            brick: makeTexture({ base: '#9E4A3A', light: '#B85D4A', dark: '#722E22' }),
+            glass: makeTexture({ base: '#B0E0E6', light: '#D0F0F5', dark: '#90C0C5' }),
+        };
+
+        function makeMaterial(type) {
+            const tex = blockTextures[type];
+            if (!tex) return new THREE.MeshLambertMaterial({ color: 0x888888 });
+            return new THREE.MeshLambertMaterial({ map: tex });
+        }
+
+        const materials = {
+            grass: [
+                new THREE.MeshLambertMaterial({ map: blockTextures.grassSide }),
+                new THREE.MeshLambertMaterial({ map: blockTextures.grassSide }),
+                new THREE.MeshLambertMaterial({ map: blockTextures.grassTop }),
+                new THREE.MeshLambertMaterial({ map: blockTextures.dirt }),
+                new THREE.MeshLambertMaterial({ map: blockTextures.grassSide }),
+                new THREE.MeshLambertMaterial({ map: blockTextures.grassSide }),
+            ],
+            dirt: Array(6).fill(0).map(() => makeMaterial('dirt')),
+            stone: Array(6).fill(0).map(() => makeMaterial('stone')),
+            sand: Array(6).fill(0).map(() => makeMaterial('sand')),
+            wood: [makeMaterial('wood'), makeMaterial('wood'), makeMaterial('woodTop'), makeMaterial('woodTop'), makeMaterial('wood'), makeMaterial('wood')],
+            leaves: Array(6).fill(0).map(() => makeMaterial('leaves')),
+            planks: Array(6).fill(0).map(() => makeMaterial('planks')),
+            cobble: Array(6).fill(0).map(() => makeMaterial('cobble')),
+            brick: Array(6).fill(0).map(() => makeMaterial('brick')),
+            glass: Array(6).fill(0).map(() => { const m = makeMaterial('glass'); m.transparent = true; m.opacity = 0.7; return m; }),
+        };
+
+        const waterMat = new THREE.MeshLambertMaterial({ color: 0x3A7DE0, transparent: true, opacity: 0.75 });
+        const blockGeo = new THREE.BoxGeometry(1, 1, 1);
+
+        // Reusable dummy for matrix updates (avoids GC pressure)
+        const dummy = new THREE.Object3D();
+
+        // === Collect block data first, then batch into InstancedMeshes ===
+        const blockData = []; // { x, y, z, type }
+
+        function addBlock(x, y, z, type) {
+            blockData.push({ x, y, z, type });
+        }
+
+        const WORLD_SIZE = 28;
+
+        function heightAt(x, z) {
+            const h1 = Math.sin(x * 0.18) * Math.cos(z * 0.15) * 2.2;
+            const h2 = Math.sin(x * 0.42 + 1.3) * Math.cos(z * 0.36 + 0.7) * 1.0;
+            const h3 = Math.sin(x * 0.08 + z * 0.07) * 1.5;
+            return h1 + h2 + h3;
+        }
+
+        // Generate terrain
+        for (let x = -WORLD_SIZE; x <= WORLD_SIZE; x++) {
+            for (let z = -WORLD_SIZE; z <= WORLD_SIZE; z++) {
+                const h = heightAt(x, z);
+                const height = Math.floor(h) + 4;
+                const topType = height <= 3 ? 'sand' : 'grass';
+                addBlock(x, height, z, topType);
+                addBlock(x, height - 1, z, 'dirt');
+                addBlock(x, height - 2, z, 'dirt');
+                addBlock(x, height - 3, z, 'stone');
+                addBlock(x, height - 4, z, 'stone');
+                if (height < 3) addBlock(x, 3, z, 'water');
+            }
+        }
+
+        // Trees
+        function placeTree(x, z) {
+            const h = Math.floor(heightAt(x, z)) + 4;
+            if (h <= 3) return;
+            for (let i = 1; i <= 4; i++) addBlock(x, h + i, z, 'wood');
+            for (let dx = -2; dx <= 2; dx++) {
+                for (let dz = -2; dz <= 2; dz++) {
+                    for (let dy = 3; dy <= 5; dy++) {
+                        if (Math.abs(dx) === 2 && Math.abs(dz) === 2 && Math.random() > 0.5) continue;
+                        if (dx === 0 && dz === 0 && dy < 5) continue;
+                        addBlock(x + dx, h + dy, z + dz, 'leaves');
+                    }
+                }
+            }
+            addBlock(x, h + 6, z, 'leaves');
+        }
+
+        [[-12, -8], [-8, 12], [10, -14], [16, 8], [-18, 4], [4, 18], [-6, -16], [22, -4], [-22, -10], [14, 18], [-2, 22], [8, 8], [-14, 16]]
+            .forEach(([x, z]) => placeTree(x, z));
+
+        // House
+        function placeHouse(originX, originZ) {
+            const baseY = Math.floor(heightAt(originX, originZ)) + 5;
+            for (let dx = 0; dx < 5; dx++) for (let dz = 0; dz < 5; dz++) addBlock(originX + dx, baseY, originZ + dz, 'planks');
+            for (let dy = 1; dy <= 3; dy++) {
+                for (let dx = 0; dx < 5; dx++) { addBlock(originX + dx, baseY + dy, originZ, 'planks'); addBlock(originX + dx, baseY + dy, originZ + 4, 'planks'); }
+                for (let dz = 0; dz < 5; dz++) { addBlock(originX, baseY + dy, originZ + dz, 'planks'); addBlock(originX + 4, baseY + dy, originZ + dz, 'planks'); }
+            }
+            addBlock(originX + 2, baseY + 1, originZ, 'glass');
+            addBlock(originX + 2, baseY + 2, originZ, 'glass');
+            for (let dx = -1; dx <= 5; dx++) for (let dz = -1; dz <= 5; dz++) addBlock(originX + dx, baseY + 4, originZ + dz, 'wood');
+            for (let dx = 0; dx < 5; dx++) for (let dz = 0; dz < 5; dz++) addBlock(originX + dx, baseY + 5, originZ + dz, 'wood');
+        }
+        placeHouse(-15, -3);
+
+        // Tower
+        function placeTower(x, z) {
+            const baseY = Math.floor(heightAt(x, z)) + 5;
+            for (let dy = 0; dy < 7; dy++) {
+                addBlock(x, baseY + dy, z, 'cobble');
+                addBlock(x + 1, baseY + dy, z, 'cobble');
+                addBlock(x, baseY + dy, z + 1, 'cobble');
+                addBlock(x + 1, baseY + dy, z + 1, 'cobble');
+            }
+            for (let dx = -1; dx <= 2; dx++) for (let dz = -1; dz <= 2; dz++) {
+                if (Math.random() > 0.3) addBlock(x + dx, baseY + 7, z + dz, 'cobble');
+            }
+        }
+        placeTower(12, 4);
+
+        // === KEY OPTIMIZATION: Group blocks by type → one InstancedMesh per type ===
+        // This reduces ~17,000 draw calls down to ~11
+        const byType = {};
+        for (const b of blockData) {
+            if (!byType[b.type]) byType[b.type] = [];
+            byType[b.type].push(b);
+        }
+
+        const instancedMeshes = {};
+        const blockInstances = {};
+        const typeColors = {
+            grass: 0x7CB342, dirt: 0x8B5A2B, stone: 0x828282, sand: 0xE0D090,
+            wood: 0x6E5A3E, planks: 0xB8860B, leaves: 0x4CAF50, cobble: 0x7A7A7A,
+            brick: 0x9E4A3A, glass: 0xB0E0E6, water: 0x3A7DE0,
+        };
+
+        for (const type in byType) {
+            const instances = byType[type];
+            blockInstances[type] = instances;
+            const mat = type === 'water' ? waterMat : (materials[type] || materials.stone);
+            const mesh = new THREE.InstancedMesh(blockGeo, mat, instances.length);
+            mesh.frustumCulled = false; // world is centered, avoid per-frame culling overhead
+            for (let i = 0; i < instances.length; i++) {
+                dummy.position.set(instances[i].x, instances[i].y, instances[i].z);
+                dummy.scale.setScalar(1);
+                dummy.rotation.set(0, 0, 0);
+                dummy.updateMatrix();
+                mesh.setMatrixAt(i, dummy.matrix);
+            }
+            mesh.instanceMatrix.needsUpdate = true;
+            scene.add(mesh);
+            instancedMeshes[type] = mesh;
+        }
+
+        // === Clouds as single InstancedMesh ===
+        const clouds = [];
+        for (let i = 0; i < 8; i++) {
+            const cx = (Math.random() - 0.5) * 80;
+            const cy = 22 + Math.random() * 8;
+            const cz = (Math.random() - 0.5) * 80;
+            const blockCount = 4 + Math.floor(Math.random() * 5);
+            const blocks = [];
+            for (let j = 0; j < blockCount; j++) {
+                blocks.push({
+                    x: cx + Math.floor(Math.random() * 4 - 2),
+                    y: cy + Math.floor(Math.random() * 2 - 1),
+                    z: cz + Math.floor(Math.random() * 4 - 2),
+                });
+            }
+            clouds.push({ speed: 0.5 + Math.random() * 0.8, offsetX: 0, blocks });
+        }
+
+        const totalCloudBlocks = clouds.reduce((s, c) => s + c.blocks.length, 0);
+        const cloudMat = new THREE.MeshLambertMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.85 });
+        const cloudMesh = new THREE.InstancedMesh(blockGeo, cloudMat, totalCloudBlocks);
+        cloudMesh.frustumCulled = false;
+        cloudMesh.raycast = () => { }; // clouds don't need click interaction
+        scene.add(cloudMesh);
+
+        // Set initial cloud matrices
+        {
+            let i = 0;
+            for (const cloud of clouds) {
+                for (const b of cloud.blocks) {
+                    dummy.position.set(b.x, b.y, b.z);
+                    dummy.scale.setScalar(1);
+                    dummy.rotation.set(0, 0, 0);
+                    dummy.updateMatrix();
+                    cloudMesh.setMatrixAt(i, dummy.matrix);
+                    i++;
+                }
+            }
+            cloudMesh.instanceMatrix.needsUpdate = true;
+        }
+
+        // === Stars ===
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 200;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            const r = 100;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI * 0.5;
+            starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            starPositions[i * 3 + 1] = r * Math.cos(phi);
+            starPositions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xFFFFFF, size: 0.8, transparent: true, opacity: 0 });
+        const stars = new THREE.Points(starGeo, starMat);
+        scene.add(stars);
+
+        // === Sun & Moon ===
+        const sunGeo = new THREE.BoxGeometry(4, 4, 4);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xFFF8DC });
+        const sun = new THREE.Mesh(sunGeo, sunMat);
+        scene.add(sun);
+        const moonMat = new THREE.MeshBasicMaterial({ color: 0xE0E0FF });
+        const moon = new THREE.Mesh(sunGeo, moonMat);
+        scene.add(moon);
+
+        // === Particles as InstancedMesh (pre-allocated, no per-frame allocation) ===
+        const MAX_PARTICLES = 200;
+        const particleGeo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+        const particleMat = new THREE.MeshBasicMaterial();
+        const particleMesh = new THREE.InstancedMesh(particleGeo, particleMat, MAX_PARTICLES);
+        particleMesh.frustumCulled = false;
+        particleMesh.count = 0;
+        particleMesh.raycast = () => { };
+        scene.add(particleMesh);
+
+        const particleData = [];
+        const _particleColor = new THREE.Color();
+
+        function spawnParticles(position, color, count = 10) {
+            _particleColor.setHex(color);
+            for (let i = 0; i < count; i++) {
+                if (particleData.length >= MAX_PARTICLES) particleData.shift();
+                particleData.push({
+                    pos: new THREE.Vector3(
+                        position.x + (Math.random() - 0.5) * 0.4,
+                        position.y + (Math.random() - 0.5) * 0.4,
+                        position.z + (Math.random() - 0.5) * 0.4
+                    ),
+                    vel: new THREE.Vector3(
+                        (Math.random() - 0.5) * 5,
+                        Math.random() * 5 + 2,
+                        (Math.random() - 0.5) * 5
+                    ),
+                    life: 1.0,
+                    maxLife: 1.0,
+                    color: _particleColor.clone(),
+                });
+            }
+        }
+
+        function updateParticles(dt) {
+            for (let i = particleData.length - 1; i >= 0; i--) {
+                const p = particleData[i];
+                p.vel.y -= 14 * dt;
+                p.pos.addScaledVector(p.vel, dt);
+                p.life -= dt;
+                if (p.life <= 0) particleData.splice(i, 1);
+            }
+            for (let i = 0; i < particleData.length; i++) {
+                const p = particleData[i];
+                const s = Math.max(0, p.life / p.maxLife);
+                dummy.position.copy(p.pos);
+                dummy.scale.setScalar(s);
+                dummy.rotation.set((1 - p.life) * 5, 0, (1 - p.life) * 5);
+                dummy.updateMatrix();
+                particleMesh.setMatrixAt(i, dummy.matrix);
+                particleMesh.setColorAt(i, p.color);
+            }
+            particleMesh.count = particleData.length;
+            particleMesh.instanceMatrix.needsUpdate = true;
+            if (particleMesh.instanceColor) particleMesh.instanceColor.needsUpdate = true;
+        }
+
+        // === Raycaster for click interactions ===
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let shakeData = null;
+
+        function onPointerDown(e) {
+            if (e.target.closest('.hotbar, .connect-btn, .inv-slot, .project-card, .advancement')) return;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const meshes = Object.values(instancedMeshes);
+            const hits = raycaster.intersectObjects(meshes, false);
+            if (hits.length > 0 && hits[0].distance < 30) {
+                const hit = hits[0];
+                let type = null;
+                for (const [t, m] of Object.entries(instancedMeshes)) {
+                    if (m === hit.object) { type = t; break; }
+                }
+                if (!type) return;
+                const color = typeColors[type] || 0x8B5A2B;
+                spawnParticles(hit.point, color, 14);
+                if (type !== 'water' && hit.instanceId !== undefined) {
+                    shakeData = { type, instanceIdx: hit.instanceId, time: 0, duration: 0.2 };
+                }
+            }
+        }
+        window.addEventListener('pointerdown', onPointerDown);
+
+        // === Camera keyframes ===
+        const cameraKeyframes = [
+            { p: [0, 18, 36], l: [0, 8, 0] },
+            { p: [14, 12, 28], l: [-4, 6, 0] },
+            { p: [-12, 10, 24], l: [4, 5, -2] },
+            { p: [18, 16, 22], l: [-6, 8, -4] },
+            { p: [0, 22, 30], l: [0, 6, -8] },
+            { p: [-16, 14, 28], l: [4, 6, 4] },
+        ];
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+        function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+        let scrollProgress = 0;
+        const _camLook = new THREE.Vector3();
+
+        function updateCamera() {
+            const n = cameraKeyframes.length - 1;
+            const seg = scrollProgress * n;
+            const i = Math.min(Math.floor(seg), n - 1);
+            const t = smoothstep(seg - i);
+            const kf1 = cameraKeyframes[i];
+            const kf2 = cameraKeyframes[i + 1];
+            camera.position.set(
+                lerp(kf1.p[0], kf2.p[0], t) + mouseParallax.x * 1.5,
+                lerp(kf1.p[1], kf2.p[1], t) + mouseParallax.y * 1.2,
+                lerp(kf1.p[2], kf2.p[2], t)
+            );
+            _camLook.set(lerp(kf1.l[0], kf2.l[0], t), lerp(kf1.l[1], kf2.l[1], t), lerp(kf1.l[2], kf2.l[2], t));
+            camera.lookAt(_camLook);
+        }
+
+        // === Day/night cycle (in-place color blending, no allocations) ===
+        const dayColors = {
+            dawn: { sky: new THREE.Color(0xFFB07A), fog: new THREE.Color(0xFFB07A), sun: new THREE.Color(0xFFD080), ambient: 0.55, sunInt: 0.9, hemi: 0.4 },
+            day: { sky: new THREE.Color(0x87CEEB), fog: new THREE.Color(0x87CEEB), sun: new THREE.Color(0xFFFFFF), ambient: 0.7, sunInt: 1.1, hemi: 0.6 },
+            dusk: { sky: new THREE.Color(0xE07A4A), fog: new THREE.Color(0xE07A4A), sun: new THREE.Color(0xFF8040), ambient: 0.5, sunInt: 0.8, hemi: 0.4 },
+            night: { sky: new THREE.Color(0x0F1923), fog: new THREE.Color(0x1A2332), sun: new THREE.Color(0xA0A8C0), ambient: 0.35, sunInt: 0.4, hemi: 0.3 },
+        };
+
+        function updateDayNight() {
+            let from, to, t;
+            if (scrollProgress < 0.3) { from = dayColors.dawn; to = dayColors.day; t = scrollProgress / 0.3; }
+            else if (scrollProgress < 0.65) { from = dayColors.day; to = dayColors.dusk; t = (scrollProgress - 0.3) / 0.35; }
+            else { from = dayColors.dusk; to = dayColors.night; t = (scrollProgress - 0.65) / 0.35; }
+            t = smoothstep(t);
+
+            // In-place lerp — no new Color objects created per frame
+            scene.background.lerpColors(from.sky, to.sky, t);
+            scene.fog.color.lerpColors(from.fog, to.fog, t);
+            sunLight.color.lerpColors(from.sun, to.sun, t);
+            sunLight.intensity = lerp(from.sunInt, to.sunInt, t);
+            ambient.intensity = lerp(from.ambient, to.ambient, t);
+            hemiLight.intensity = lerp(from.hemi, to.hemi, t);
+
+            const sunAngle = scrollProgress * Math.PI - 0.2;
+            sun.position.set(Math.cos(sunAngle) * 60, Math.sin(sunAngle) * 50 + 5, 20);
+            sunLight.position.copy(sun.position);
+            moon.position.set(-Math.cos(sunAngle) * 60, -Math.sin(sunAngle) * 50 + 5, 20);
+
+            starMat.opacity = Math.max(0, (scrollProgress - 0.7) / 0.3) * 0.9;
+
+            if (sun.position.y > 0) { sun.visible = true; sunMat.color.copy(sunLight.color); }
+            else sun.visible = false;
+            moon.visible = moon.position.y > 0;
+
+            // Single shared material — one opacity update instead of per-block
+            cloudMat.opacity = lerp(0.85, 0.3, t);
+        }
+
+        // === Mouse parallax with smoothing ===
+        const mouseParallax = { x: 0, y: 0, tx: 0, ty: 0 };
+        window.addEventListener('mousemove', (e) => {
+            mouseParallax.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseParallax.ty = -(e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        // === Water animation — only iterate water instances, not all blocks ===
+        function updateWater(time) {
+            const mesh = instancedMeshes['water'];
+            if (!mesh) return;
+            const instances = blockInstances['water'];
+            if (!instances) return;
+            for (let i = 0; i < instances.length; i++) {
+                // Skip if this exact instance is being shaken
+                if (shakeData && shakeData.type === 'water' && shakeData.instanceIdx === i) continue;
+                const inst = instances[i];
+                const y = inst.y + Math.sin(time + inst.x * 0.3 + inst.z * 0.3) * 0.08;
+                dummy.position.set(inst.x, y, inst.z);
+                dummy.scale.setScalar(1);
+                dummy.rotation.set(0, 0, 0);
+                dummy.updateMatrix();
+                mesh.setMatrixAt(i, dummy.matrix);
+            }
+            mesh.instanceMatrix.needsUpdate = true;
+        }
+
+        // === Cloud animation ===
+        function updateClouds(dt) {
+            let i = 0;
+            for (const cloud of clouds) {
+                cloud.offsetX += cloud.speed * dt;
+                if (cloud.offsetX > 50) cloud.offsetX = -50;
+                for (const b of cloud.blocks) {
+                    dummy.position.set(b.x + cloud.offsetX, b.y, b.z);
+                    dummy.scale.setScalar(1);
+                    dummy.rotation.set(0, 0, 0);
+                    dummy.updateMatrix();
+                    cloudMesh.setMatrixAt(i, dummy.matrix);
+                    i++;
+                }
+            }
+            cloudMesh.instanceMatrix.needsUpdate = true;
+        }
+
+        // === Block shake on click (time-based, no nested rAF) ===
+        function updateShake(dt) {
+            if (!shakeData) return;
+            shakeData.time += dt;
+            const mesh = instancedMeshes[shakeData.type];
+            const inst = blockInstances[shakeData.type][shakeData.instanceIdx];
+            if (shakeData.time >= shakeData.duration) {
+                dummy.position.set(inst.x, inst.y, inst.z);
+                dummy.scale.setScalar(1);
+                dummy.rotation.set(0, 0, 0);
+                dummy.updateMatrix();
+                mesh.setMatrixAt(shakeData.instanceIdx, dummy.matrix);
+                mesh.instanceMatrix.needsUpdate = true;
+                shakeData = null;
+                return;
+            }
+            dummy.position.set(
+                inst.x + (Math.random() - 0.5) * 0.08,
+                inst.y + (Math.random() - 0.5) * 0.08,
+                inst.z + (Math.random() - 0.5) * 0.08
+            );
+            dummy.scale.setScalar(1);
+            dummy.rotation.set(0, 0, 0);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(shakeData.instanceIdx, dummy.matrix);
+            mesh.instanceMatrix.needsUpdate = true;
+        }
+
+        // === Scroll handling (throttled with rAF) ===
+        let scrollPending = false;
+        function onScroll() {
+            if (scrollPending) return;
+            scrollPending = true;
+            requestAnimationFrame(() => {
+                scrollPending = false;
+                const max = document.documentElement.scrollHeight - window.innerHeight;
+                scrollProgress = Math.min(1, Math.max(0, window.scrollY / max));
+                const sections = ['hero', 'about', 'skills', 'projects', 'education', 'contact'];
+                const sectionIdx = Math.min(sections.length - 1, Math.floor(scrollProgress * sections.length * 1.0001));
+                document.querySelectorAll('.hotbar-slot').forEach((slot, i) => {
+                    slot.classList.toggle('active', i === sectionIdx);
+                });
+                document.getElementById('xpFill').style.width = (scrollProgress * 100) + '%';
+                document.getElementById('coordX').textContent = Math.round(scrollProgress * 1247 - 312);
+                document.getElementById('coordY').textContent = Math.round(64 + Math.sin(scrollProgress * 8) * 12);
+                document.getElementById('coordZ').textContent = Math.round(scrollProgress * 891 - 234);
+                const biomes = ['PLAINS', 'FOREST', 'MOUNTAINS', 'DESERT', 'OCEAN', 'NETHER'];
+                document.getElementById('biome').textContent = biomes[sectionIdx];
+                document.getElementById('xpLevel').textContent = 'LVL ' + Math.floor(1 + scrollProgress * 99);
+            });
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+
+        // === Hotbar click ===
+        document.querySelectorAll('.hotbar-slot').forEach(slot => {
+            slot.addEventListener('click', () => {
+                const id = slot.dataset.section;
+                const target = document.getElementById(id);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        window.addEventListener('keydown', (e) => {
+            const key = parseInt(e.key);
+            if (key >= 1 && key <= 6) {
+                const slot = document.querySelectorAll('.hotbar-slot')[key - 1];
+                if (slot) slot.click();
+            }
+        });
+
+        // === Achievement system ===
+        const achievementDefs = [
+            { id: 'hero', icon: '★', name: 'Welcome to the World' },
+            { id: 'about', icon: '☺', name: 'Profile Discovered' },
+            { id: 'skills', icon: '◆', name: 'Inventory Opened' },
+            { id: 'projects', icon: '⛏', name: 'Master Builder' },
+            { id: 'education', icon: '✦', name: 'Scholar Advancement' },
+            { id: 'contact', icon: '◈', name: 'Multiplayer Connected' },
+        ];
+
+        const unlockedAchievements = new Set();
+        const achToast = document.getElementById('achToast');
+        const achIcon = document.getElementById('achIcon');
+        const achName = document.getElementById('achName');
+        let achTimeout;
+
+        function showAchievement(def) {
+            if (unlockedAchievements.has(def.id)) return;
+            unlockedAchievements.add(def.id);
+            achIcon.textContent = def.icon;
+            achName.textContent = def.name;
+            achToast.classList.add('show');
+            achToast.classList.remove('hide');
+            clearTimeout(achTimeout);
+            achTimeout = setTimeout(() => {
+                achToast.classList.remove('show');
+                achToast.classList.add('hide');
+            }, 3500);
+        }
+
+        // === Intersection Observer for reveals & achievements ===
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    const section = entry.target.closest('section');
+                    if (section) {
+                        const def = achievementDefs.find(a => a.id === section.id);
+                        if (def) setTimeout(() => showAchievement(def), 400);
+                    }
+                }
+            });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // === Resize ===
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // === Animation loop ===
+        let lastTime = performance.now();
+        let fpsAccum = 0;
+        let fpsFrames = 0;
+        const fpsEl = document.getElementById('fpsCounter');
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const now = performance.now();
+            const dt = Math.min(0.05, (now - lastTime) / 1000);
+            lastTime = now;
+
+            fpsAccum += dt;
+            fpsFrames++;
+            if (fpsAccum >= 0.5) {
+                const fps = Math.round(fpsFrames / fpsAccum);
+                fpsEl.textContent = 'FPS: ' + fps;
+                fpsEl.style.color = fps >= 50 ? '#7FFF00' : (fps >= 30 ? '#FFD700' : '#FF3030');
+                fpsAccum = 0;
+                fpsFrames = 0;
+            }
+
+            // Smooth mouse parallax
+            mouseParallax.x += (mouseParallax.tx - mouseParallax.x) * 0.05;
+            mouseParallax.y += (mouseParallax.ty - mouseParallax.y) * 0.05;
+
+            updateClouds(dt);
+
+            const time = now * 0.001;
+            updateWater(time);
+            updateShake(dt);
+
+            stars.rotation.y = time * 0.02;
+
+            updateCamera();
+            updateDayNight();
+            updateParticles(dt);
+
+            renderer.render(scene, camera);
+        }
+
+        // === Loading sequence ===
+        const loadingFill = document.getElementById('loadingFill');
+        const loadingText = document.getElementById('loadingText');
+        const loadingMessages = [
+            'Generating World...', 'Placing Blocks...', 'Spawning Trees...',
+            'Building Structures...', 'Loading Textures...', 'Calibrating Light...',
+            'Preparing Spawn...', 'Almost There...'
+        ];
+
+        let loadProgress = 0;
+        const loadInterval = setInterval(() => {
+            loadProgress += 2 + Math.random() * 4;
+            if (loadProgress >= 100) {
+                loadProgress = 100;
+                clearInterval(loadInterval);
+                setTimeout(() => {
+                    document.getElementById('loading').classList.add('hidden');
+                    setTimeout(() => showAchievement(achievementDefs[0]), 800);
+                    animate();
+                }, 600);
+            }
+            loadingFill.style.width = loadProgress + '%';
+            const idx = Math.min(loadingMessages.length - 1, Math.floor((loadProgress / 100) * loadingMessages.length));
+            loadingText.textContent = loadingMessages[idx] + ' ' + Math.floor(loadProgress) + '%';
+        }, 180);
+
+        // Initial state
+        onScroll();
+        updateCamera();
+        updateDayNight();
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) lastTime = performance.now();
+        });
+    </script>
+</body>
+
+</html>
